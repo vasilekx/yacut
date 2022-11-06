@@ -1,7 +1,7 @@
 import random
 import string
 
-from flask import flash, redirect, render_template  # , url_for, abort
+from flask import flash, redirect, render_template
 
 from . import app, db
 from .forms import URL_mapForm
@@ -16,11 +16,9 @@ def generate_alphanum_random_string(length):
 
 
 def get_unique_short_id():
-    # urls = URL_map.query.with_entities(URL_map.short).all()
     urls = [url.short for url in URL_map.query.all()]
     while True:
         new_url = generate_alphanum_random_string(DEFAULT_LINK_LENGTH)
-        # if (new_url,) in urls:
         if new_url not in urls:
             break
     return new_url
@@ -28,21 +26,21 @@ def get_unique_short_id():
 
 @app.route('/<string:id>')
 def get_original_url(id):
-    url1 = URL_map.query.filter_by(short=id).first_or_404()
-    return redirect(url1.original)
+    return redirect(URL_map.query.filter_by(short=id).first_or_404().original)
 
 
 @app.route('/', methods=['GET', 'POST'])
 def yacut_view():
     form = URL_mapForm()
+    custom_id = form.custom_id.data
     context = dict()
     if form.validate_on_submit():
-        if form.short.data == '':
-            form.short.data = get_unique_short_id()
-        if URL_map.query.filter_by(short=form.short.data).first():
-            flash('Такой вариант короткой ссылки уже занят!')
+        if custom_id is None or custom_id == '':
+            custom_id = get_unique_short_id()
+        elif URL_map.query.filter_by(short=custom_id).first():
+            flash(f'Имя {custom_id} уже занято!')
             return render_template('yacut.html', form=form)
-        url = URL_map(original=form.original.data, short=form.short.data)
+        url = URL_map(original=form.original_link.data, short=custom_id)
         db.session.add(url)
         db.session.commit()
         context['url'] = url
