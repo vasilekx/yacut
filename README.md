@@ -12,7 +12,7 @@
 Расширения для Flask:
 
 [![flask-sqlalchemy](https://img.shields.io/badge/Flask_SQLAlchemy-2.5.1-blue?style=flat-square&logoColor=3776AB&labelColor=d0d0d0)](https://flask-sqlalchemy.palletsprojects.com/en/2.x/)
-[![Flask-wtf](https://img.shields.io/badge/Flask_WTF-1.0.0-blue?style=flat-square&logoColor=3776AB&labelColor=d0d0d0)](https://flask-sqlalchemy.palletsprojects.com/en/2.x/)
+[![Flask-wtf](https://img.shields.io/badge/Flask_WTF-1.0.0-blue?style=flat-square&logoColor=3776AB&labelColor=d0d0d0)](https://flask-wtf.readthedocs.io/en/latest/)
 [![Flask-Migrate](https://img.shields.io/badge/Flask_Migrate-3.1.0-blue?style=flat-square&logoColor=3776AB&labelColor=d0d0d0)](https://flask-migrate.readthedocs.io/en/latest/index.html)
 
 ## Запуск сервиса
@@ -97,18 +97,24 @@ flask run
 http://127.0.0.1:5000/
 ```
 
-## Доступ к API сервиса
+### Доступ к API сервиса
 ```http
 http://127.0.0.1:5000/api/id/
 ```
 
-## [Спецификация на API](openapi.yml)
+### [Спецификация на API](openapi.yml)
 
-## Примеры запросов к API
+### Примеры запросов к API
 
 #### Создание новой короткой ссылки:
 
 **POST**-запрос:
+
+```http
+http://127.0.0.1:5000/api/id/
+```
+
+Тело запроса:
 
 ```json
 {
@@ -142,5 +148,5 @@ http://127.0.0.1:5000/api/id/myshorturl
 }
 ```
 
-### Автор
+## Автор
 [Владислав Василенко](https://github.com/vasilekx)
