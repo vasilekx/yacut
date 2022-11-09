@@ -2,31 +2,46 @@ from flask_wtf import FlaskForm
 from wtforms import SubmitField, URLField, StringField
 from wtforms.validators import DataRequired, Length, Optional, URL, Regexp
 
+from .constants import (
+    REGEXP_ID,
+    CUSTOM_LINK_LENGTH,
+    MAX_ORIGINAL_LINK_LENGTH,
+    VALID_SYMBOLS_SET
+)
 
-LENGHT_ERROR = 'Вариант короткой ссылки не должен превышать 16 символов.'
-REGEXP_ERROR = (f'Используяте только большие латинские буквы, '
-                f'маленькие латинские буквы и '
-                f'цифры в диапазоне от 0 до 9. '
-                f'{LENGHT_ERROR}')
+
+LENGHT_ERROR = (
+    f'Вариант короткой ссылки не должен превышать '
+    f'{CUSTOM_LINK_LENGTH} символов.'
+)
+REGEXP_ERROR = (
+    f'Используйте следующие символы {", ".join(VALID_SYMBOLS_SET)}. '
+    f'{LENGHT_ERROR}'
+)
 REQUIRED_INPUT_ERROR = 'Обязательное поле.'
 URL_ERROR = 'Введите корректный URL-адрес.'
-REGEXP_ID = r'^[0-9a-zA-Z]{0,16}$'
+LENGHT_URL_ERROR = 'Превышена максимальная длина URL-адреса.'
+
+ORIGINAL_LINK_LABEL = 'Длинная ссылка'
+CUSTOM_ID_LABEL = 'Ваш вариант короткой ссылки'
+SUBMIT_BUTTON_LABEL = 'Создать'
 
 
 class URL_mapForm(FlaskForm):
     original_link = StringField(
-        'Длинная ссылка',
+        ORIGINAL_LINK_LABEL,
         validators=[
+            Length(max=MAX_ORIGINAL_LINK_LENGTH, message=LENGHT_URL_ERROR),
             DataRequired(message=REQUIRED_INPUT_ERROR),
             URL(message=URL_ERROR)
         ]
     )
     custom_id = URLField(
-        'Ваш вариант короткой ссылки',
+        CUSTOM_ID_LABEL,
         validators=[
-            Length(1, 16, message=LENGHT_ERROR),
+            Length(max=CUSTOM_LINK_LENGTH, message=LENGHT_ERROR),
             Regexp(REGEXP_ID, message=REGEXP_ERROR),
             Optional()
         ]
     )
-    submit = SubmitField('Создать')
+    submit = SubmitField(SUBMIT_BUTTON_LABEL)

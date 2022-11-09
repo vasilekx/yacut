@@ -54,16 +54,16 @@
         <div class="col-sm">
           <p class="text-center">
             <h5 class="text-center">
-              {% with messages = get_flashed_messages(with_categories=true) %}
+              {% with messages = get_flashed_messages() %}
                 {% if messages %}
-                  {% for category, message in messages %}
-                  {{ message }}
-                    {% if category == 'url-done' %}
-                      <a href="{{ url_for('get_original_url', id=url.short, _external=True) }}">{{ url_for('get_original_url', id=url.short, _external=True) }}</a>
-                    {% endif %}
+                  {% for message in messages %}
+                    {{ message }}
                   {% endfor %}
                 {% endif %}
               {% endwith %}
+              {% if url %}
+                <a href="{{ url_for('get_original_url', id=url.short, _external=True) }}">{{ url_for('get_original_url', id=url.short, _external=True) }}</a>
+              {% endif %}
             </h5>
           </p>
         </div>

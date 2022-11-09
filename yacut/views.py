@@ -1,49 +1,40 @@
 import random
-import string
 
-from flask import flash, redirect, render_template
+from flask import flash, redirect, render_template, abort
 
-from . import app, db
+from . import app
 from .forms import URL_mapForm
 from .models import URL_map
 
 
-DEFAULT_LINK_LENGTH = 6
+ALREADY_EXISTS = 'Имя {custom_id} уже занято!'
+URL_DONE = 'Ваша новая ссылка готова:'
 
 
-def generate_alphanum_random_string(length):
-    return ''.join(random.sample(string.ascii_letters + string.digits, length))
-
-
-def get_unique_short_id():
-    urls = [url.short for url in URL_map.query.all()]
-    while True:
-        new_url = generate_alphanum_random_string(DEFAULT_LINK_LENGTH)
-        if new_url not in urls:
-            break
-    return new_url
+def generate_random_string(pattern, length):
+    return ''.join(random.sample(pattern, length))
 
 
 @app.route('/<string:id>')
 def get_original_url(id):
-    return redirect(URL_map.query.filter_by(short=id).first_or_404().original)
+    url = URL_map.get(short=id)
+    if url is None:
+        abort(404)
+    return redirect(url.original)
 
 
 @app.route('/', methods=['GET', 'POST'])
 def yacut_view():
     form = URL_mapForm()
-    custom_id = form.custom_id.data
-    context = dict()
-    if form.validate_on_submit():
-        if custom_id is None or custom_id == '':
-            custom_id = get_unique_short_id()
-        elif URL_map.query.filter_by(short=custom_id).first():
-            flash(f'Имя {custom_id} уже занято!')
-            return render_template('yacut.html', form=form)
-        url = URL_map(original=form.original_link.data, short=custom_id)
-        db.session.add(url)
-        db.session.commit()
-        context['url'] = url
-        flash('Ваша новая ссылка готова:', 'url-done')
-    context['form'] = form
-    return render_template('yacut.html', **context)
+    if not form.validate_on_submit():
+        return render_template('index.html', form=form)
+    custom_id = URL_map.check_or_generate_short_url(form.custom_id.data)
+    if URL_map.get(short=custom_id):
+        flash(ALREADY_EXISTS.format(custom_id=custom_id))
+        return render_template('index.html', form=form)
+    flash(URL_DONE)
+    return render_template(
+        'index.html',
+        form=form,
+        url=URL_map.add(original=form.original_link.data, short=custom_id)
+    )

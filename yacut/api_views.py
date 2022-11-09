@@ -1,19 +1,24 @@
-import re
+# import re
 
 from flask import jsonify, request
 
-from . import app, db
-from .forms import REGEXP_ID
+from . import app
 from .models import URL_map
-from .views import get_unique_short_id
 from .error_handlers import InvalidAPIUsage
+
+
+NOT_FOUND_URL = 'Указанный id не найден'
+EMPTY_REQUEST = 'Отсутствует тело запроса'
+NO_REQUIRED_URL_FIELD = '\"url\" является обязательным полем!'
+INVALID_CUSTOM_ID = 'Указано недопустимое имя для короткой ссылки'
+ALREADY_EXISTS = 'Имя \"{custom_id}\" уже занято.'
 
 
 @app.route('/api/id/<string:short_id>/', methods=['GET'])
 def get_opinion(short_id):
-    url = URL_map.query.filter_by(short=short_id).first()
+    url = URL_map.get(short=short_id)
     if url is None:
-        raise InvalidAPIUsage('Указанный id не найден', 404)
+        raise InvalidAPIUsage(NOT_FOUND_URL, 404)
     return jsonify({'url': url.original}), 200
 
 
@@ -21,20 +26,17 @@ def get_opinion(short_id):
 def add_opinion():
     data = request.get_json()
     if data is None:
-        raise InvalidAPIUsage('Отсутствует тело запроса')
+        raise InvalidAPIUsage(EMPTY_REQUEST)
     url = data.get('url')
-    custom_id = data.get('custom_id')
     if url is None or url == '':
-        raise InvalidAPIUsage('\"url\" является обязательным полем!')
-    if custom_id is None or custom_id == '':
-        custom_id = get_unique_short_id()
-    elif re.match(REGEXP_ID, custom_id) is None:
-        raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
-    elif URL_map.query.filter_by(short=custom_id).first() is not None:
-        raise InvalidAPIUsage(f'Имя \"{custom_id}\" уже занято.')
-    new_url = URL_map()
-    new_url.original = url
-    new_url.short = custom_id
-    db.session.add(new_url)
-    db.session.commit()
-    return jsonify(new_url.to_dict_for_api()), 201
+        raise InvalidAPIUsage(NO_REQUIRED_URL_FIELD)
+    custom_id = URL_map.validate_short_url(
+        URL_map.check_or_generate_short_url(data.get('custom_id'))
+    )
+    if custom_id is None:
+        raise InvalidAPIUsage(INVALID_CUSTOM_ID)
+    elif URL_map.get(short=custom_id) is not None:
+        raise InvalidAPIUsage(ALREADY_EXISTS.format(custom_id=custom_id))
+    return jsonify(
+        URL_map.add(original=url, short=custom_id).to_dict_for_api()
+    ), 201
