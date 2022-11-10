@@ -1,5 +1,3 @@
-import random
-
 from flask import flash, redirect, render_template, abort
 
 from . import app
@@ -8,10 +6,6 @@ from .models import URL_map
 
 
 ALREADY_EXISTS = 'Имя {custom_id} уже занято!'
-
-
-def generate_random_string(pattern, length):
-    return ''.join(random.sample(pattern, length))
 
 
 @app.route('/<string:id>')

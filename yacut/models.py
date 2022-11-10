@@ -3,26 +3,33 @@ import re
 from datetime import datetime
 
 from flask import url_for
-from yacut import db, views
+from yacut import db
 
 from .constants import (
     CUSTOM_LINK_LENGTH,
     DEFAULT_LINK_LENGTH,
     VALID_SYMBOLS_SET,
     GENERATED_RANDOM_STRING_TRY_COUNT,
-    REGEXP_ID
+    REGEXP_ID,
+    REGEXP_URL,
+    MAX_ORIGINAL_LINK_LENGTH
 )
-# from views import generate_random_string
-# from .views import generate_random_string
+from .utilities import generate_random_string
 
 ATTRIBUTE_ERROR_MESSAGE = (
     'Объект {class_name} не имеет атрибута {attr}.'
 )
-INVALID_SYMBOLS_CUSTOM_ID = 'Указанны недопустимые символы для короткой ссылки'
+INVALID_SYMBOLS_CUSTOM_ID = (
+    'Указанны недопустимые символы для короткой ссылки.'
+)
+INVALID_SYMBOLS_ORIGINAL_URL = 'Некорректный URL.'
+INVALID_LENGTH_ORIGINAL_URL = (
+    f'Вариант длинной ссылки превышает {MAX_ORIGINAL_LINK_LENGTH} символов.'
+)
 INVALID_LENGTH_CUSTOM_ID = (
     f'Вариант короткой ссылки превышает {CUSTOM_LINK_LENGTH} символов.'
 )
-INVALID_TYPE_CUSTOM_ID = 'Ожидалась строка в custom_id.'
+INVALID_TYPE = 'Ожидалась строка: {}'
 
 
 class URL_map(db.Model):
@@ -38,11 +45,6 @@ class URL_map(db.Model):
     def to_dict_for_api(self):
         return dict(
             url=self.original,
-            # short_link=url_for(
-            #     'get_original_url',
-            #     id=self.short,
-            #     _external=True
-            # ),
             short_link=self.get_short_url()
         )
 
@@ -69,8 +71,7 @@ class URL_map(db.Model):
     @staticmethod
     def get_unique_short_id():
         for _ in range(GENERATED_RANDOM_STRING_TRY_COUNT):
-            url = views.generate_random_string(
-            # url = generate_random_string(
+            url = generate_random_string(
                 VALID_SYMBOLS_SET,
                 DEFAULT_LINK_LENGTH
             )
@@ -85,14 +86,49 @@ class URL_map(db.Model):
         return custom_url
 
     @staticmethod
+    def is_str(data):
+        return isinstance(data, str)
+
+    @staticmethod
+    def _validate(
+        data,
+        kind,
+        kind_message,
+        regexp,
+        regexp_message,
+        length,
+        length_message
+    ):
+        if not isinstance(data, kind):
+            raise TypeError(kind_message)
+        if re.match(regexp, data) is None:
+            raise ValueError(regexp_message)
+        if len(data) > length:
+            raise ValueError(length_message)
+        return data
+
+    @staticmethod
     def validate_short_url(custom_url):
-        if custom_url is not None and not isinstance(custom_url, str):
-            raise TypeError(INVALID_TYPE_CUSTOM_ID)
+        if not isinstance(custom_url, str):
+            raise TypeError(INVALID_TYPE.format(custom_url))
         if re.match(REGEXP_ID, custom_url) is None:
             raise ValueError(INVALID_SYMBOLS_CUSTOM_ID)
         if len(custom_url) > CUSTOM_LINK_LENGTH:
             raise ValueError(INVALID_LENGTH_CUSTOM_ID)
         return custom_url
+
+    @staticmethod
+    def validate_original_url(original_url):
+        URL_map._validate(
+            original_url,
+            str,
+            INVALID_TYPE.format(original_url),
+            REGEXP_URL,
+            INVALID_SYMBOLS_ORIGINAL_URL,
+            MAX_ORIGINAL_LINK_LENGTH,
+            INVALID_LENGTH_ORIGINAL_URL
+        )
+        return original_url
 
     @staticmethod
     def add(**kwargs):
