@@ -9,9 +9,7 @@ from .constants import (
     DEFAULT_LINK_LENGTH,
     VALID_SYMBOLS_SET,
     GENERATED_RANDOM_STRING_TRY_COUNT,
-    REGEXP_ID,
-    REGEXP_URL,
-    MAX_ORIGINAL_LINK_LENGTH
+    REGEXP_ID
 )
 from .utilities import generate_random_string
 
@@ -20,10 +18,6 @@ ATTRIBUTE_ERROR_MESSAGE = (
 )
 INVALID_SYMBOLS_CUSTOM_ID = (
     'Указанны недопустимые символы для короткой ссылки.'
-)
-INVALID_SYMBOLS_ORIGINAL_URL = 'Некорректный URL.'
-INVALID_LENGTH_ORIGINAL_URL = (
-    f'Вариант длинной ссылки превышает {MAX_ORIGINAL_LINK_LENGTH} символов.'
 )
 INVALID_LENGTH_CUSTOM_ID = (
     f'Вариант короткой ссылки превышает {CUSTOM_LINK_LENGTH} символов.'
@@ -96,48 +90,14 @@ class URL_map(db.Model):
         return isinstance(data, str)
 
     @staticmethod
-    def _validate(
-        data,
-        kind,
-        kind_message,
-        regexp,
-        regexp_message,
-        length,
-        length_message
-    ):
-        if not isinstance(data, kind):
-            raise TypeError(kind_message)
-        if re.match(regexp, data) is None:
-            raise ValueError(regexp_message)
-        if len(data) > length:
-            raise ValueError(length_message)
-        return data
-
-    @staticmethod
     def validate_short_url(custom_url):
-        URL_map._validate(
-            custom_url,
-            str,
-            INVALID_TYPE.format(custom_url),
-            REGEXP_ID,
-            INVALID_SYMBOLS_CUSTOM_ID,
-            CUSTOM_LINK_LENGTH,
-            INVALID_LENGTH_CUSTOM_ID
-        )
+        if not isinstance(custom_url, str):
+            raise TypeError(INVALID_TYPE.format(custom_url))
+        if re.match(REGEXP_ID, custom_url) is None:
+            raise ValueError(INVALID_SYMBOLS_CUSTOM_ID)
+        if len(custom_url) > CUSTOM_LINK_LENGTH:
+            raise ValueError(INVALID_LENGTH_CUSTOM_ID)
         return custom_url
-
-    @staticmethod
-    def validate_original_url(original_url):
-        URL_map._validate(
-            original_url,
-            str,
-            INVALID_TYPE.format(original_url),
-            REGEXP_URL,
-            INVALID_SYMBOLS_ORIGINAL_URL,
-            MAX_ORIGINAL_LINK_LENGTH,
-            INVALID_LENGTH_ORIGINAL_URL
-        )
-        return original_url
 
     @staticmethod
     def add(**kwargs):

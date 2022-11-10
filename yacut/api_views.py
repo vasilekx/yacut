@@ -9,12 +9,11 @@ NOT_FOUND_URL = 'Указанный id не найден'
 EMPTY_REQUEST = 'Отсутствует тело запроса'
 NO_REQUIRED_URL_FIELD = '\"url\" является обязательным полем!'
 INVALID_CUSTOM_ID = 'Указано недопустимое имя для короткой ссылки'
-INVALID_ORIGINAL_URL = 'Указан некорректный URL-адрес.'
 ALREADY_EXISTS = 'Имя \"{custom_id}\" уже занято.'
 
 
 @app.route('/api/id/<string:short_id>/', methods=['GET'])
-def get_opinion(short_id):
+def get_url(short_id):
     url = URL_map.get(short=short_id)
     if url is None:
         raise InvalidAPIUsage(NOT_FOUND_URL, 404)
@@ -22,18 +21,13 @@ def get_opinion(short_id):
 
 
 @app.route('/api/id/', methods=['POST'])
-def add_opinion():
+def add_url():
     data = request.get_json()
     if data is None:
         raise InvalidAPIUsage(EMPTY_REQUEST)
     url = data.get('url')
     if url is None or url == '':
         raise InvalidAPIUsage(NO_REQUIRED_URL_FIELD)
-    try:
-        url = URL_map.validate_original_url(url)
-    except (TypeError, ValueError) as error:
-        # Соосбщение из валидации здесь можно вывести, тестами не ограничен
-        raise InvalidAPIUsage(str(error))
     custom_id = 'custom_id'
     if (
         custom_id in data and

@@ -22,9 +22,6 @@ def yacut_view():
     if not form.validate_on_submit():
         return render_template('index.html', form=form)
     custom_id = 'custom_id'
-    if custom_id not in form:
-        flash(FORM_ERROR)
-        return render_template('index.html', form=form)
     try:
         custom_id = URL_map.check_or_generate_short_url(form[custom_id].data)
     except ValueError as error:
