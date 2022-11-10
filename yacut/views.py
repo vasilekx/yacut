@@ -8,7 +8,6 @@ from .models import URL_map
 
 
 ALREADY_EXISTS = 'Имя {custom_id} уже занято!'
-URL_DONE = 'Ваша новая ссылка готова:'
 
 
 def generate_random_string(pattern, length):
@@ -28,13 +27,18 @@ def yacut_view():
     form = URL_mapForm()
     if not form.validate_on_submit():
         return render_template('index.html', form=form)
-    custom_id = URL_map.check_or_generate_short_url(form.custom_id.data)
+    custom_id = 'custom_id'
+    if custom_id not in form:
+        abort(500)
+    custom_id = URL_map.check_or_generate_short_url(form[custom_id].data)
     if URL_map.get(short=custom_id):
         flash(ALREADY_EXISTS.format(custom_id=custom_id))
         return render_template('index.html', form=form)
-    flash(URL_DONE)
     return render_template(
         'index.html',
         form=form,
-        url=URL_map.add(original=form.original_link.data, short=custom_id)
+        short_url=URL_map.add(
+            original=form.original_link.data,
+            short=custom_id
+        ).get_short_url()
     )

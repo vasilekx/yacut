@@ -12,11 +12,17 @@ from .constants import (
     GENERATED_RANDOM_STRING_TRY_COUNT,
     REGEXP_ID
 )
-
+# from views import generate_random_string
+# from .views import generate_random_string
 
 ATTRIBUTE_ERROR_MESSAGE = (
     'Объект {class_name} не имеет атрибута {attr}.'
 )
+INVALID_SYMBOLS_CUSTOM_ID = 'Указанны недопустимые символы для короткой ссылки'
+INVALID_LENGTH_CUSTOM_ID = (
+    f'Вариант короткой ссылки превышает {CUSTOM_LINK_LENGTH} символов.'
+)
+INVALID_TYPE_CUSTOM_ID = 'Ожидалась строка в custom_id.'
 
 
 class URL_map(db.Model):
@@ -32,55 +38,64 @@ class URL_map(db.Model):
     def to_dict_for_api(self):
         return dict(
             url=self.original,
-            short_link=url_for(
-                'get_original_url',
-                id=self.short,
-                _external=True
-            ),
+            # short_link=url_for(
+            #     'get_original_url',
+            #     id=self.short,
+            #     _external=True
+            # ),
+            short_link=self.get_short_url()
         )
 
-    @classmethod
-    def _check_attributes(cls, attrs):
+    def get_short_url(self):
+        return url_for('get_original_url', id=self.short, _external=True)
+
+    @staticmethod
+    def _check_attributes(attrs):
+        klass = URL_map
         for key in attrs:
-            if not hasattr(cls, key):
+            if not hasattr(klass, key):
                 raise AttributeError(
                     ATTRIBUTE_ERROR_MESSAGE.format(
-                        class_name=cls.__name__,
+                        class_name=klass.__name__,
                         attr=key
                     )
                 )
 
-    @classmethod
-    def get(cls, **kwargs):
-        cls._check_attributes(kwargs.keys())
-        return cls.query.filter_by(**kwargs).first()
+    @staticmethod
+    def get(**kwargs):
+        URL_map._check_attributes(kwargs.keys())
+        return URL_map.query.filter_by(**kwargs).first()
 
-    @classmethod
-    def get_unique_short_id(cls):
+    @staticmethod
+    def get_unique_short_id():
         for _ in range(GENERATED_RANDOM_STRING_TRY_COUNT):
             url = views.generate_random_string(
+            # url = generate_random_string(
                 VALID_SYMBOLS_SET,
                 DEFAULT_LINK_LENGTH
             )
-            if not cls.get(short=url):
+            if not URL_map.get(short=url):
                 break
         return url
 
-    @classmethod
-    def check_or_generate_short_url(cls, custom_url):
+    @staticmethod
+    def check_or_generate_short_url(custom_url=None):
         if custom_url is None or custom_url == '':
-            return cls.get_unique_short_id()
+            return URL_map.get_unique_short_id()
         return custom_url
 
-    @classmethod
-    def validate_short_url(cls, custom_url):
-        return custom_url if (
-            re.match(REGEXP_ID, custom_url) and
-            len(custom_url) <= CUSTOM_LINK_LENGTH
-        ) else None
+    @staticmethod
+    def validate_short_url(custom_url):
+        if custom_url is not None and not isinstance(custom_url, str):
+            raise TypeError(INVALID_TYPE_CUSTOM_ID)
+        if re.match(REGEXP_ID, custom_url) is None:
+            raise ValueError(INVALID_SYMBOLS_CUSTOM_ID)
+        if len(custom_url) > CUSTOM_LINK_LENGTH:
+            raise ValueError(INVALID_LENGTH_CUSTOM_ID)
+        return custom_url
 
-    @classmethod
-    def add(cls, **kwargs):
+    @staticmethod
+    def add(**kwargs):
         url = URL_map(**kwargs)
         db.session.add(url)
         db.session.commit()

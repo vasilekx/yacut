@@ -25,14 +25,25 @@ def get_opinion(short_id):
 @app.route('/api/id/', methods=['POST'])
 def add_opinion():
     data = request.get_json()
+    print(data)
     if data is None:
         raise InvalidAPIUsage(EMPTY_REQUEST)
     url = data.get('url')
     if url is None or url == '':
         raise InvalidAPIUsage(NO_REQUIRED_URL_FIELD)
-    custom_id = URL_map.validate_short_url(
-        URL_map.check_or_generate_short_url(data.get('custom_id'))
-    )
+    # Страховка реализованна в check_or_generate_short_url
+    custom_id = 'custom_id'
+    if custom_id in data and data[custom_id] != '':
+        # try:
+        custom_id = URL_map.validate_short_url(data[custom_id])
+        # custom_id = URL_map.validate_short_url(
+        #     URL_map.check_or_generate_short_url(data.get('custom_id', None))
+        # )
+    else:
+        custom_id = URL_map.check_or_generate_short_url()
+    # custom_id = URL_map.validate_short_url(
+    #     URL_map.check_or_generate_short_url(data.get('custom_id', None))
+    # )
     if custom_id is None:
         raise InvalidAPIUsage(INVALID_CUSTOM_ID)
     elif URL_map.get(short=custom_id) is not None:

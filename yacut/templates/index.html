@@ -55,14 +55,13 @@
           <p class="text-center">
             <h5 class="text-center">
               {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                  {% for message in messages %}
-                    {{ message }}
-                  {% endfor %}
-                {% endif %}
+                {% for message in messages %}
+                  {{ message }}
+                {% endfor %}
               {% endwith %}
-              {% if url %}
-                <a href="{{ url_for('get_original_url', id=url.short, _external=True) }}">{{ url_for('get_original_url', id=url.short, _external=True) }}</a>
+              {% if short_url %}
+                Ваша новая ссылка готова:
+                <a href="{{ short_url }}">{{ short_url }}</a>
               {% endif %}
             </h5>
           </p>
