@@ -86,10 +86,6 @@ class URL_map(db.Model):
         return custom_url
 
     @staticmethod
-    def is_str(data):
-        return isinstance(data, str)
-
-    @staticmethod
     def validate_short_url(custom_url):
         if not isinstance(custom_url, str):
             raise TypeError(INVALID_TYPE.format(custom_url))
