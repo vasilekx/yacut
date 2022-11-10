@@ -1,5 +1,3 @@
-# import re
-
 from flask import jsonify, request
 
 from . import app
@@ -26,7 +24,6 @@ def get_opinion(short_id):
 @app.route('/api/id/', methods=['POST'])
 def add_opinion():
     data = request.get_json()
-    print(data)
     if data is None:
         raise InvalidAPIUsage(EMPTY_REQUEST)
     url = data.get('url')
@@ -49,7 +46,10 @@ def add_opinion():
             # Соосбщение из валидации не вывести, органичен тестами
             raise InvalidAPIUsage(INVALID_CUSTOM_ID)
     else:
-        custom_id = URL_map.check_or_generate_short_url()
+        try:
+            custom_id = URL_map.check_or_generate_short_url()
+        except ValueError as error:
+            raise InvalidAPIUsage(str(error))
     if URL_map.get(short=custom_id) is not None:
         raise InvalidAPIUsage(ALREADY_EXISTS.format(custom_id=custom_id))
     return jsonify(

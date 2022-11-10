@@ -1,11 +1,11 @@
 from flask import flash, redirect, render_template, abort
 
 from . import app
-from .forms import URL_mapForm
+from .forms import URL_mapForm, ORIGINAL_LINK_LABEL
 from .models import URL_map
 
-
 ALREADY_EXISTS = 'Имя {custom_id} уже занято!'
+FORM_ERROR = f'"{ORIGINAL_LINK_LABEL}" является обязательным полем!'
 
 
 @app.route('/<string:id>')
@@ -23,8 +23,13 @@ def yacut_view():
         return render_template('index.html', form=form)
     custom_id = 'custom_id'
     if custom_id not in form:
-        abort(500)
-    custom_id = URL_map.check_or_generate_short_url(form[custom_id].data)
+        flash(FORM_ERROR)
+        return render_template('index.html', form=form)
+    try:
+        custom_id = URL_map.check_or_generate_short_url(form[custom_id].data)
+    except ValueError as error:
+        flash(str(error))
+        return render_template('index.html', form=form)
     if URL_map.get(short=custom_id):
         flash(ALREADY_EXISTS.format(custom_id=custom_id))
         return render_template('index.html', form=form)

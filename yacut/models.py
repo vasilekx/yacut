@@ -1,5 +1,4 @@
 import re
-
 from datetime import datetime
 
 from flask import url_for
@@ -30,6 +29,9 @@ INVALID_LENGTH_CUSTOM_ID = (
     f'Вариант короткой ссылки превышает {CUSTOM_LINK_LENGTH} символов.'
 )
 INVALID_TYPE = 'Ожидалась строка: {}'
+GENERATE_URL_ERROR = (
+    'Ошибка гененирования URL. Попробуйте ещё раз.'
+)
 
 
 class URL_map(db.Model):
@@ -70,13 +72,17 @@ class URL_map(db.Model):
 
     @staticmethod
     def get_unique_short_id():
+        url = None
         for _ in range(GENERATED_RANDOM_STRING_TRY_COUNT):
-            url = generate_random_string(
+            new_url = generate_random_string(
                 VALID_SYMBOLS_SET,
                 DEFAULT_LINK_LENGTH
             )
             if not URL_map.get(short=url):
+                url = new_url
                 break
+        if not url:
+            raise ValueError(GENERATE_URL_ERROR)
         return url
 
     @staticmethod
@@ -109,12 +115,15 @@ class URL_map(db.Model):
 
     @staticmethod
     def validate_short_url(custom_url):
-        if not isinstance(custom_url, str):
-            raise TypeError(INVALID_TYPE.format(custom_url))
-        if re.match(REGEXP_ID, custom_url) is None:
-            raise ValueError(INVALID_SYMBOLS_CUSTOM_ID)
-        if len(custom_url) > CUSTOM_LINK_LENGTH:
-            raise ValueError(INVALID_LENGTH_CUSTOM_ID)
+        URL_map._validate(
+            custom_url,
+            str,
+            INVALID_TYPE.format(custom_url),
+            REGEXP_ID,
+            INVALID_SYMBOLS_CUSTOM_ID,
+            CUSTOM_LINK_LENGTH,
+            INVALID_LENGTH_CUSTOM_ID
+        )
         return custom_url
 
     @staticmethod
