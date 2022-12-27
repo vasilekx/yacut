@@ -37,7 +37,6 @@ def add_url():
         try:
             custom_id = URL_map.validate_short_url(data[custom_id])
         except (TypeError, ValueError):
-            # Соосбщение из валидации не вывести, органичен тестами
             raise InvalidAPIUsage(INVALID_CUSTOM_ID)
     else:
         try:
