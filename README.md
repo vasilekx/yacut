@@ -96,6 +96,8 @@ flask run
 ```http
 http://127.0.0.1:5000/
 ```
+<img width="1243" alt="Снимок экрана 2022-12-27 в 14 16 30" src="https://user-images.githubusercontent.com/11489198/209658961-01755882-52f7-4681-a6e6-d1c9dc280f17.png">
+
 
 ### Доступ к API сервиса
 ```http
